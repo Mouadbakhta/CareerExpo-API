@@ -39,10 +39,9 @@ public class Admin  implements  UserDetails        {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     @Column (unique = true )
-    private String username;
+    private String email;
     @JsonIgnore
     private String password;
-    private  String role;
 
 
 }

@@ -3,7 +3,7 @@
  * 
  * MÉTHODES :
  * - extends JpaRepository<Admin, Long>
- * - findByUsername(String username) : Optional<Admin>
+ * - findByUsername(String email) : Optional<Admin>
  * 
  * USAGE : Utilisé dans AuthController et AdminService
  */
@@ -14,7 +14,9 @@ import com.careerexpo.careerexpo_API.entity.Admin;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AdminRepository extends JpaRepository<Admin, Long> {
-    Admin findByUsername(String username);
+    Admin findByemail(String email);
+    Admin findByPassword(String password);
+    Admin findByEmailAndPassword(String email, String password);
 
 
 }
