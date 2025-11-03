@@ -33,15 +33,21 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Table(name = "admins")
-public class Admin  implements  UserDetails        {
+public class Admin  implements  UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+
     @Column (unique = true )
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
     private String email;
+
     @JsonIgnore
+    @Column (unique = true )
     private String password;
+
 
 
 }
