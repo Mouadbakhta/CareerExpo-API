@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "competitions")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Competition {
@@ -36,5 +35,43 @@ public class Competition {
     @JsonIgnoreProperties("competition") //to prevent recursive json calling
     private List<Etudiant> etudiants = new ArrayList<>();
 
+    public Long getId() {
+        return id;
+    }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public @NotBlank String getDescription() {
+        return description;
+    }
+
+    public void setDescription(@NotBlank String description) {
+        this.description = description;
+    }
+
+    public LocalDate getAnnee() {
+        return annee;
+    }
+
+    public void setAnnee(LocalDate annee) {
+        this.annee = annee;
+    }
+
+    public Admin getAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(Admin admin) {
+        this.admin = admin;
+    }
+
+    public List<Etudiant> getEtudiants() {
+        return etudiants;
+    }
+
+    public void setEtudiants(List<Etudiant> etudiants) {
+        this.etudiants = etudiants;
+    }
 }

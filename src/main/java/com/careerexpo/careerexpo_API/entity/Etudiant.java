@@ -1,5 +1,6 @@
 package com.careerexpo.careerexpo_API.entity;
 
+import io.micrometer.common.lang.NonNullApi;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -7,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 @Entity
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "etudiants")
@@ -40,8 +40,75 @@ public class Etudiant {
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
+    @Column(columnDefinition = "VARCHAR(255)")
+    @NotBlank
+    private String niveau;
+
     private enum Status {
         PENDING, ACCEPTED, DECLINED
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public @NotBlank(message = "Le nom est obligatoire") String getNom() {
+        return nom;
+    }
+
+    public void setNom(@NotBlank(message = "Le nom est obligatoire") String nom) {
+        this.nom = nom;
+    }
+
+    public @NotBlank(message = "Le prénom est obligatoire") String getPrenom() {
+        return prenom;
+    }
+
+    public void setPrenom(@NotBlank(message = "Le prénom est obligatoire") String prenom) {
+        this.prenom = prenom;
+    }
+
+    public @NotBlank(message = "L'établissement est obligatoire") String getEtablissement() {
+        return etablissement;
+    }
+
+    public void setEtablissement(@NotBlank(message = "L'établissement est obligatoire") String etablissement) {
+        this.etablissement = etablissement;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public @NotBlank(message = "Le chemin du CV est obligatoire") String getCvPath() {
+        return cvPath;
+    }
+
+    public void setCvPath(@NotBlank(message = "Le chemin du CV est obligatoire") String cvPath) {
+        this.cvPath = cvPath;
+    }
+
+    public Competition getCompetition() {
+        return competition;
+    }
+
+    public void setCompetition(Competition competition) {
+        this.competition = competition;
+    }
+
+    public @NotBlank String getNiveau() {
+        return niveau;
+    }
+
+    public void setNiveau(@NotBlank String niveau) {
+        this.niveau = niveau;
+    }
 }

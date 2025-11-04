@@ -1,65 +1,141 @@
-/**
- * SERVICE : Logique des compétitions.
- * 
- * MÉTHODES CRUD :
- * - findAll(), findById(), save(), update(), delete()
- * 
- * VALIDATION : dates cohérentes, champs requis
- */
-
 package com.careerexpo.careerexpo_API.service.impl;
 
 import com.careerexpo.careerexpo_API.entity.Competition;
 import com.careerexpo.careerexpo_API.repository.CompetitionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.careerexpo.careerexpo_API.service.facade.CompetitionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class CompetitionServiceImpl {
+public class CompetitionServiceImpl implements CompetitionService {
 
-    @Autowired
-    private CompetitionRepository competitionRepository;
+    private final CompetitionRepository competitionRepository;
 
-    public List<Competition> findAll() {
-        return competitionRepository.findAll();
+    public CompetitionServiceImpl(CompetitionRepository competitionRepository) {
+        this.competitionRepository = competitionRepository;
     }
 
-    public Optional<Competition> findById(Long id) {
-        return competitionRepository.findById(id);
-    }
+    @Override
+    @Transactional
+    public Competition createCompetition(Competition competition) {
+        if (!validateCompetition(competition)) {
+            throw new IllegalArgumentException("Données de compétition invalides");
+        }
 
-    public Competition save(Competition competition) {
-        validateCompetition(competition);
+        if (competition.getId() == null && existsByAnnee(competition.getAnnee())) {
+            throw new IllegalArgumentException("Une compétition existe déjà pour cette année");
+        }
+
         return competitionRepository.save(competition);
     }
 
-    public Competition update(Long id, Competition competition) {
-        validateCompetition(competition);
-        Competition existing = competitionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Compétition non trouvée avec ID: " + id));
-
-        existing.setNom(competition.getNom());
-        existing.setDescription(competition.getDescription());
-        existing.setDateDebut(competition.getDateDebut());
-        existing.setDateFin(competition.getDateFin());
-
-        return competitionRepository.save(existing);
+    @Override
+    public Optional<Competition> getCompetitionById(Long id) {
+        return competitionRepository.findById(id);
     }
 
-    public void delete(Long id) {
+    @Override
+    public Optional<Competition> getCompetitionWithEtudiants(Long id) {
+        return competitionRepository.findByIdWithEtudiants(id);
+    }
+
+    @Override
+    public Optional<Competition> getCompetitionByAnnee(LocalDate annee) {
+        return competitionRepository.findByAnnee(annee);
+    }
+
+    @Override
+    public List<Competition> getAllCompetitionsByAnnee(LocalDate annee) {
+        return competitionRepository.findAllByAnnee(annee);
+    }
+
+    @Override
+    public List<Competition> getAllCompetitions() {
+        return competitionRepository.findAll();
+    }
+
+    @Override
+    public List<Competition> getCompetitionsByAdminId(Long adminId) {
+        return competitionRepository.findByAdminId(adminId);
+    }
+
+    @Override
+    public List<Competition> getCompetitionsByAdminIdWithAdmin(Long adminId) {
+        return competitionRepository.findByAdminIdWithAdmin(adminId);
+    }
+
+    @Override
+    public List<Competition> getCompetitionsByAdminEmail(String email) {
+        return competitionRepository.findByAdminEmail(email);
+    }
+
+    @Override
+    public List<Competition> getCompetitionsBetweenDates(LocalDate startDate, LocalDate endDate) {
+        return competitionRepository.findByAnneeBetween(startDate, endDate);
+    }
+
+    @Override
+    @Transactional
+    public Competition updateCompetition(Long id, Competition competition) {
+        Competition existingCompetition = competitionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Compétition non trouvée avec l'id: " + id));
+
+        existingCompetition.setDescription(competition.getDescription());
+        existingCompetition.setAnnee(competition.getAnnee());
+
+        if (competition.getAdmin() != null) {
+            existingCompetition.setAdmin(competition.getAdmin());
+        }
+
+        if (!validateCompetition(existingCompetition)) {
+            throw new IllegalArgumentException("Données de compétition invalides");
+        }
+
+        return competitionRepository.save(existingCompetition);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCompetition(Long id) {
+        if (!competitionRepository.existsById(id)) {
+            throw new RuntimeException("Compétition non trouvée avec l'id: " + id);
+        }
         competitionRepository.deleteById(id);
     }
 
-    private void validateCompetition(Competition competition) {
-        if (competition.getNom() == null || competition.getNom().isEmpty()) {
-            throw new IllegalArgumentException("Le nom de la compétition est requis");
+    @Override
+    public boolean existsByAnnee(LocalDate annee) {
+        return competitionRepository.existsByAnnee(annee);
+    }
+
+    @Override
+    public boolean validateCompetition(Competition competition) {
+        if (competition == null) {
+            return false;
         }
-        if (competition.getDateDebut() != null && competition.getDateFin() != null &&
-            competition.getDateDebut().isAfter(competition.getDateFin())) {
-            throw new IllegalArgumentException("La date de début doit être avant la date de fin");
+
+        if (competition.getDescription() == null || competition.getDescription().isBlank()) {
+            return false;
         }
+
+        if (competition.getAnnee() == null) {
+            return false;
+        }
+
+        if (competition.getAdmin() == null) {
+            return false;
+        }
+
+        // Optionnel: Vérifier que l'année n'est pas dans le passé
+        // if (competition.getAnnee().isBefore(LocalDate.now())) {
+        //     return false;
+        // }
+
+        return true;
     }
 }

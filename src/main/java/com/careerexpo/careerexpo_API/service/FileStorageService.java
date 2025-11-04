@@ -1,91 +1,101 @@
-/**
- * SERVICE : Gestion des fichiers CV (upload, téléchargement, suppression).
- * 
- * MÉTHODES :
- * - init() → @PostConstruct → crée le dossier uploads/cv
- * - store(MultipartFile file, String nom, String prenom) → nom unique + sauvegarde
- * - load(String filename) → retourne Resource
- * - delete(String filename) → suppression physique
- * 
- * SÉCURITÉ : Vérifie extension .pdf, taille ≤ 5 Mo
- */
-
-
 package com.careerexpo.careerexpo_API.service;
-
-import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.*;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Service
 public class FileStorageService {
 
-    private final Path uploadDir = Paths.get("src/main/resources/static/uploads/cv");
+    private final Path fileStorageLocation;
 
-    @PostConstruct
-    public void init() {
+    public FileStorageService(@Value("${file.upload-dir:uploads/cv}") String uploadDir) {
+        this.fileStorageLocation = Paths.get(uploadDir)
+                .toAbsolutePath().normalize();
+
         try {
-            if (!Files.exists(uploadDir)) {
-                Files.createDirectories(uploadDir);
-                System.out.println("Folder created: " + uploadDir.toAbsolutePath());
+            Files.createDirectories(this.fileStorageLocation);
+        } catch (Exception ex) {
+            throw new RuntimeException("Impossible de créer le répertoire de stockage des fichiers.", ex);
+        }
+    }
+
+    /**
+     * Sauvegarder un fichier et retourner son chemin
+     */
+    public String storeFile(MultipartFile file) {
+        // Nettoyer le nom du fichier
+        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+
+        try {
+            // Vérifier si le fichier contient des caractères invalides
+            if (originalFileName.contains("..")) {
+                throw new RuntimeException("Le nom du fichier contient une séquence de chemin invalide: " + originalFileName);
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create upload directory!", e);
+
+            // Générer un nom de fichier unique
+            String fileExtension = "";
+            int lastDotIndex = originalFileName.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                fileExtension = originalFileName.substring(lastDotIndex);
+            }
+
+            String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
+
+            // Copier le fichier vers l'emplacement cible
+            Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+            return uniqueFileName;
+        } catch (IOException ex) {
+            throw new RuntimeException("Impossible de sauvegarder le fichier " + originalFileName + ". Réessayez!", ex);
         }
     }
 
-    public String store(MultipartFile file, String nom, String prenom) {
-        if (file.isEmpty()) {
-            throw new RuntimeException("File is empty!");
-        }
-
-
-        if (!file.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
-            throw new RuntimeException("Only PDF files are allowed!");
-        }
-
-        if (file.getSize() > 5 * 1024 * 1024) {
-            throw new RuntimeException("File too large! Max 5MB.");
-        }
-
-        String filename = nom + "_" + prenom + ".pdf";
-        Path destination = uploadDir.resolve(filename);
-
+    /**
+     * Charger un fichier en tant que Resource
+     */
+    public Resource loadFileAsResource(String fileName) {
         try {
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-            return filename;
-        } catch (IOException e) {
-            throw new RuntimeException("Error while saving file: " + e.getMessage());
-        }
-    }
-
-    public Resource load(String filename) {
-        try {
-            Path filePath = uploadDir.resolve(filename);
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
-            if (resource.exists() && resource.isReadable()) {
+
+            if (resource.exists()) {
                 return resource;
             } else {
-                throw new RuntimeException("Could not read file: " + filename);
+                throw new RuntimeException("Fichier non trouvé: " + fileName);
             }
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("File not found: " + filename, e);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("Fichier non trouvé: " + fileName, ex);
         }
     }
 
-    public void delete(String filename) {
+    /**
+     * Supprimer un fichier
+     */
+    public void deleteFile(String fileName) {
         try {
-            Path filePath = uploadDir.resolve(filename);
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not delete file: " + filename);
+        } catch (IOException ex) {
+            throw new RuntimeException("Impossible de supprimer le fichier: " + fileName, ex);
         }
+    }
+
+    /**
+     * Obtenir le chemin complet d'un fichier
+     */
+    public Path getFilePath(String fileName) {
+        return this.fileStorageLocation.resolve(fileName).normalize();
     }
 }
