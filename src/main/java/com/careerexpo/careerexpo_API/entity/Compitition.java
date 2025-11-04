@@ -1,5 +1,5 @@
 
-/*======= Entity Compétition================
+/**======= Entity Compétition================
  CREATE TABLE competition (
  id BIGINT AUTO_INCREMENT PRIMARY KEY,
  description TEXT,
@@ -40,6 +40,8 @@ public class Competition{
     @JoinColumn(name = "admin_id",nullable = false, insertable = true, updatable = true)
     private Admin admin;
 
+    @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL)
+    private List<Etudiant> etudiants;)
 
 
 
