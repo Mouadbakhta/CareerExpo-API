@@ -1,22 +1,10 @@
-/**CREATE TABLE etudiant (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        nom VARCHAR(50) NOT NULL,
-prenom VARCHAR(50) NOT NULL,
-etablissement VARCHAR(100) NOT NULL,
-cv_path VARCHAR(255),
-competition_id BIGINT NOT NULL,
-FOREIGN KEY (competition_id) REFERENCES competition(id)
-        );
-
- **/
-
 package com.careerexpo.careerexpo_API.entity;
 
-import  jakarta.persistence.*;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import java.util.List;
 
 @Entity
 @Data
@@ -40,15 +28,20 @@ public class Etudiant {
     @Column(nullable = false)
     private String etablissement;
 
+    @Column(columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
     @NotBlank(message = "Le chemin du CV est obligatoire")
     @Column(nullable = false)
     private String cvPath;
 
-
-    @ManyToOne
-    @JoinColumn(name = "competition_id", nullable = false, insertable = true, updatable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
+    private enum Status {
+        PENDING, ACCEPTED, DECLINED
+    }
+
 }
-
-

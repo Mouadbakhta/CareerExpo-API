@@ -7,7 +7,7 @@
  * VALIDATION : dates cohérentes, champs requis
  */
 
-package com.careerexpo.careerexpo_API.service;
+package com.careerexpo.careerexpo_API.service.impl;
 
 import com.careerexpo.careerexpo_API.entity.Competition;
 import com.careerexpo.careerexpo_API.repository.CompetitionRepository;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class CompetitionService {
+public class CompetitionServiceImpl {
 
     @Autowired
     private CompetitionRepository competitionRepository;

@@ -11,10 +11,11 @@
  * DÉPENDANCES : EtudiantRepository, FileStorageService
  */
 
-package com.careerexpo.careerexpo_API.service;
+package com.careerexpo.careerexpo_API.service.impl;
 
 import com.careerexpo.careerexpo_API.entity.Etudiant;
 import com.careerexpo.careerexpo_API.repository.EtudiantRepository;
+import com.careerexpo.careerexpo_API.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,7 +28,7 @@ import java.io.PrintWriter;
 import java.util.Optional;
 
 @Service
-public class EtudiantService {
+public class EtudiantServiceImpl {
 
     @Autowired
     private EtudiantRepository etudiantRepository;
