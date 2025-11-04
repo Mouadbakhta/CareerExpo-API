@@ -2,7 +2,6 @@ package com.careerexpo.careerexpo_API.controller;
 
 import com.careerexpo.careerexpo_API.entity.Competition;
 import com.careerexpo.careerexpo_API.service.facade.CompetitionService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/competitions")
-@RequiredArgsConstructor
+
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class CompetitionController {
 
@@ -52,16 +51,23 @@ public class CompetitionController {
     }
 
     // Get competition by year
-    @GetMapping("/annee/{annee}")
-    public ResponseEntity<Competition> getCompetitionByAnnee(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate annee) {
-        return competitionService.getCompetitionByAnnee(annee)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    // @GetMapping("/annee/{annee}")
+    // public ResponseEntity<Competition> getCompetitionByAnnee(
+    //         @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate annee) {
+    //     return competitionService.getCompetitionByAnnee(annee)
+    //             .map(ResponseEntity::ok)
+    //             .orElse(ResponseEntity.notFound().build());
+    // }
+
+    // Get all competitions by year (integer year)
+    @GetMapping("/annee/{year}")
+    public ResponseEntity<List<Competition>> getCompetitionsByYear(@PathVariable int year) {
+        List<Competition> competitions = competitionService.getCompetitionsByYear(year);
+        return ResponseEntity.ok(competitions);
     }
 
-    // Get all competitions by year
-    @GetMapping("/year/{annee}")
+    // Get all competitions by year (full date)
+    @GetMapping("/annee-date/{annee}")
     public ResponseEntity<List<Competition>> getAllCompetitionsByAnnee(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate annee) {
         List<Competition> competitions = competitionService.getAllCompetitionsByAnnee(annee);

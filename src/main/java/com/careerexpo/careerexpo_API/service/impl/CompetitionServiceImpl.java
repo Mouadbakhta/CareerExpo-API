@@ -3,7 +3,6 @@ package com.careerexpo.careerexpo_API.service.impl;
 import com.careerexpo.careerexpo_API.entity.Competition;
 import com.careerexpo.careerexpo_API.repository.CompetitionRepository;
 import com.careerexpo.careerexpo_API.service.facade.CompetitionService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +34,9 @@ public class CompetitionServiceImpl implements CompetitionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Competition> getCompetitionById(Long id) {
-        return competitionRepository.findById(id);
+        return competitionRepository.findByIdWithAdmin(id);
     }
 
     @Override
@@ -77,6 +77,14 @@ public class CompetitionServiceImpl implements CompetitionService {
     @Override
     public List<Competition> getCompetitionsBetweenDates(LocalDate startDate, LocalDate endDate) {
         return competitionRepository.findByAnneeBetween(startDate, endDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Competition> getCompetitionsByYear(int year) {
+        LocalDate startDate = LocalDate.of(year, 1, 1);
+        LocalDate endDate = LocalDate.of(year, 12, 31);
+        return competitionRepository.findByYear(startDate, endDate);
     }
 
     @Override

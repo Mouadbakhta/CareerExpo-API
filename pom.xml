@@ -28,7 +28,7 @@
 	</scm>
 	<properties>
 		<!-- Changed java.version from 25 to 21 to match your SDK -->
-		<java.version>21</java.version>
+		<java.version>17</java.version>
 	</properties>
 	<dependencies>
 		<dependency>

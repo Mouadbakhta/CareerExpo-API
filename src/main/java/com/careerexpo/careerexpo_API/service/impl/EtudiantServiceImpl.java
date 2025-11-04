@@ -4,7 +4,6 @@ import com.careerexpo.careerexpo_API.entity.Etudiant;
 import com.careerexpo.careerexpo_API.repository.EtudiantRepository;
 import com.careerexpo.careerexpo_API.service.FileStorageService;
 import com.careerexpo.careerexpo_API.service.facade.EtudiantService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,8 +59,9 @@ public class EtudiantServiceImpl implements EtudiantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Etudiant> getEtudiantById(Long id) {
-        return etudiantRepository.findById(id);
+        return etudiantRepository.findByIdWithCompetition(id);
     }
 
     @Override
