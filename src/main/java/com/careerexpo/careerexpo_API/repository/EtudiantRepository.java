@@ -24,9 +24,9 @@ public interface EtudiantRepository extends JpaRepository<Etudiant, Long> {
 
     long countByCompetitionId(Long competitionId);
 
-    @Query("SELECT e FROM Etudiant e LEFT JOIN FETCH e.competition WHERE e.id = :id")
+    @Query("SELECT e FROM Etudiant e LEFT JOIN FETCH e.competition c LEFT JOIN FETCH c.admin WHERE e.id = :id")
     Optional<Etudiant> findByIdWithCompetition(@Param("id") Long id);
 
-    @Query("SELECT e FROM Etudiant e LEFT JOIN FETCH e.competition c WHERE c.id = :competitionId")
+    @Query("SELECT e FROM Etudiant e LEFT JOIN FETCH e.competition c LEFT JOIN FETCH c.admin WHERE c.id = :competitionId")
     List<Etudiant> findByCompetitionIdWithCompetition(@Param("competitionId") Long competitionId);
 }

@@ -18,6 +18,7 @@ public interface CompetitionService {
     List<Competition> getCompetitionsByAdminIdWithAdmin(Long adminId);
     List<Competition> getCompetitionsByAdminEmail(String email);
     List<Competition> getCompetitionsBetweenDates(LocalDate startDate, LocalDate endDate);
+    List<Competition> getCompetitionsByYear(int year);
     Competition updateCompetition(Long id, Competition competition);
     void deleteCompetition(Long id);
     boolean existsByAnnee(LocalDate annee);

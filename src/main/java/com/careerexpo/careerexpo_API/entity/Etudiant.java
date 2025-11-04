@@ -1,11 +1,10 @@
 package com.careerexpo.careerexpo_API.entity;
 
-import io.micrometer.common.lang.NonNullApi;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @NoArgsConstructor
@@ -38,6 +37,7 @@ public class Etudiant {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "competition_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "etudiants"})
     private Competition competition;
 
     @Column(columnDefinition = "VARCHAR(255)")

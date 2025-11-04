@@ -30,4 +30,10 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long> 
     @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.admin WHERE c.admin.id = :adminId")
     List<Competition> findByAdminIdWithAdmin(@Param("adminId") Long adminId);
 
+    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.admin WHERE c.id = :id")
+    Optional<Competition> findByIdWithAdmin(@Param("id") Long id);
+
+    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.admin WHERE c.annee BETWEEN :startDate AND :endDate")
+    List<Competition> findByYear(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
 }

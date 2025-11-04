@@ -2,11 +2,10 @@ package com.careerexpo.careerexpo_API.controller;
 
 import com.careerexpo.careerexpo_API.entity.Admin;
 import com.careerexpo.careerexpo_API.service.facade.AdminService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -24,12 +23,12 @@ public class AdminController {
 
     // Create a new admin
     @PostMapping
-    public ResponseEntity<Admin> createAdmin(@Valid @RequestBody Admin admin) {
+    public ResponseEntity<?> createAdmin(@Valid @RequestBody Admin admin) {
         try {
             Admin createdAdmin = adminService.createAdmin(admin);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdAdmin);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
 

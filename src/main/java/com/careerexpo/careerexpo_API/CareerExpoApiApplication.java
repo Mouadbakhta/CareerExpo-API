@@ -19,31 +19,31 @@ public class CareerExpoApiApplication {
         log.info("✓ Application Career Expo API démarrée avec succès");
     }
 
-    @Bean
-    public CommandLineRunner initializeDefaultAdmin(AdminService adminService) {
-        return args -> {
-            try {
-                if (adminService.getAllAdmins().isEmpty()) {
-                    log.info("Aucun admin détecté. Création d'un admin par défaut...");
+   @Bean
+   public CommandLineRunner initializeDefaultAdmin(AdminService adminService) {
+       return args -> {
+           try {
+               if (adminService.getAllAdmins().isEmpty()) {
+                   log.info("Aucun admin détecté. Création d'un admin par défaut...");
 
-                    Admin defaultAdmin = new Admin();
-                    defaultAdmin.setEmail("admin@careerexpo.com");
-                    defaultAdmin.setPassword("admin123"); // should be encoded in AdminService
-                    defaultAdmin.setRole("ADMIN");
+                   Admin defaultAdmin = new Admin();
+                   defaultAdmin.setEmail("admin@careerexpo.com");
+                   defaultAdmin.setPassword("admin123"); // should be encoded in AdminService
+                   defaultAdmin.setRole("ADMIN");
 
-                    adminService.createAdmin(defaultAdmin);
+                   adminService.createAdmin(defaultAdmin);
 
-                    log.info("✓ Admin par défaut créé avec succès");
-                    log.info("  Email : admin@careerexpo.com");
-                    log.info("  Rôle : ADMIN");
-                    log.info("  ⚠️ IMPORTANT : changez ce mot de passe avant la mise en production !");
-                } else {
-                    log.info("✓ Admin(s) déjà présent(s) dans la base de données");
-                }
-            } catch (Exception e) {
-                log.warn("⚠️ Erreur lors de l'initialisation de l'admin par défaut : {}", e.getMessage());
-                log.warn("Créez un admin manuellement via l'API si nécessaire.");
-            }
-        };
-    }
+                   log.info("✓ Admin par défaut créé avec succès");
+                   log.info("  Email : admin@careerexpo.com");
+                   log.info("  Rôle : ADMIN");
+                   log.info("  ⚠️ IMPORTANT : changez ce mot de passe avant la mise en production !");
+               } else {
+                   log.info("✓ Admin(s) déjà présent(s) dans la base de données");
+               }
+           } catch (Exception e) {
+               log.warn("⚠️ Erreur lors de l'initialisation de l'admin par défaut : {}", e.getMessage());
+               log.warn("Créez un admin manuellement via l'API si nécessaire.");
+           }
+       };
+   }
 }

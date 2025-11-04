@@ -1,15 +1,22 @@
-/**
- * CONFIGURATION SÉCURITÉ : Spring Security + JWT.
- * 
- * FONCTIONNALITÉS :
- * - Désactive CSRF (API REST)
- * - CORS : autorise http://localhost:3000 (frontend)
- * - Endpoints publics :
- *   → POST /api/auth/login
- *   → POST /api/etudiants
- *   → GET /api/evenements/**
- *   → GET /api/competitions
- * - Tout le reste → nécessite JWT + rôle ADMIN
- * - JWT Filter : valide le token à chaque requête
- * - BCryptPasswordEncoder bean
- */
+package com.careerexpo.careerexpo_API.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class WebSecurityConfig {
+
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http
+			.csrf(csrf -> csrf.disable())
+			.cors(cors -> { })
+			.authorizeHttpRequests(auth -> auth
+				.anyRequest().permitAll()
+			);
+
+		return http.build();
+	}
+}
