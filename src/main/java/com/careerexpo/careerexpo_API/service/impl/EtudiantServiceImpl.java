@@ -1,7 +1,9 @@
 package com.careerexpo.careerexpo_API.service.impl;
 
 import com.careerexpo.careerexpo_API.entity.Etudiant;
+import com.careerexpo.careerexpo_API.entity.Competition;
 import com.careerexpo.careerexpo_API.repository.EtudiantRepository;
+import com.careerexpo.careerexpo_API.repository.CompetitionRepository;
 import com.careerexpo.careerexpo_API.service.FileStorageService;
 import com.careerexpo.careerexpo_API.service.facade.EtudiantService;
 import org.springframework.stereotype.Service;
@@ -16,10 +18,12 @@ public class EtudiantServiceImpl implements EtudiantService {
 
     private final EtudiantRepository etudiantRepository;
     private final FileStorageService fileStorageService; // Service pour gérer les fichiers
+    private final CompetitionRepository competitionRepository;
 
-    public EtudiantServiceImpl(EtudiantRepository etudiantRepository, FileStorageService fileStorageService) {
+    public EtudiantServiceImpl(EtudiantRepository etudiantRepository, FileStorageService fileStorageService, CompetitionRepository competitionRepository) {
         this.etudiantRepository = etudiantRepository;
         this.fileStorageService = fileStorageService;
+        this.competitionRepository = competitionRepository;
     }
 
     @Override
@@ -31,6 +35,18 @@ public class EtudiantServiceImpl implements EtudiantService {
 
         if (existsByNomAndPrenom(etudiant.getNom(), etudiant.getPrenom())) {
             throw new IllegalArgumentException("Un étudiant avec ce nom et prénom existe déjà");
+        }
+
+        // Assure un statut par défaut si absent
+        if (etudiant.getStatus() == null) {
+            etudiant.setStatus(Etudiant.Status.PENDING);
+        }
+
+        // Attacher une compétition gérée si seule l'ID est fournie
+        if (etudiant.getCompetition() != null && etudiant.getCompetition().getId() != null) {
+            Competition managedCompetition = competitionRepository.findById(etudiant.getCompetition().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Compétition introuvable avec l'id: " + etudiant.getCompetition().getId()));
+            etudiant.setCompetition(managedCompetition);
         }
 
         return etudiantRepository.save(etudiant);
@@ -54,6 +70,18 @@ public class EtudiantServiceImpl implements EtudiantService {
         // Sauvegarder le fichier CV et obtenir le chemin
         String cvPath = fileStorageService.storeFile(cvFile);
         etudiant.setCvPath(cvPath);
+
+        // Assure un statut par défaut si absent
+        if (etudiant.getStatus() == null) {
+            etudiant.setStatus(Etudiant.Status.PENDING);
+        }
+
+        // Attacher une compétition gérée si seule l'ID est fournie
+        if (etudiant.getCompetition() != null && etudiant.getCompetition().getId() != null) {
+            Competition managedCompetition = competitionRepository.findById(etudiant.getCompetition().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Compétition introuvable avec l'id: " + etudiant.getCompetition().getId()));
+            etudiant.setCompetition(managedCompetition);
+        }
 
         return etudiantRepository.save(etudiant);
     }
@@ -103,18 +131,31 @@ public class EtudiantServiceImpl implements EtudiantService {
     @Transactional
     public Etudiant updateEtudiant(Long id, Etudiant etudiant) {
         Etudiant existingEtudiant = etudiantRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé avec l'id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Étudiant non trouvé avec l'id: " + id));
 
         existingEtudiant.setNom(etudiant.getNom());
         existingEtudiant.setPrenom(etudiant.getPrenom());
         existingEtudiant.setEtablissement(etudiant.getEtablissement());
+
+        if (etudiant.getNiveau() != null) {
+            existingEtudiant.setNiveau(etudiant.getNiveau());
+        }
+
+        if (etudiant.getStatus() != null) {
+            existingEtudiant.setStatus(etudiant.getStatus());
+        }
 
         if (etudiant.getCvPath() != null) {
             existingEtudiant.setCvPath(etudiant.getCvPath());
         }
 
         if (etudiant.getCompetition() != null) {
-            existingEtudiant.setCompetition(etudiant.getCompetition());
+            if (etudiant.getCompetition().getId() == null) {
+                throw new IllegalArgumentException("L'identifiant de la compétition est requis");
+            }
+            Competition managedCompetition = competitionRepository.findById(etudiant.getCompetition().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Compétition introuvable avec l'id: " + etudiant.getCompetition().getId()));
+            existingEtudiant.setCompetition(managedCompetition);
         }
 
         if (!validateEtudiant(existingEtudiant)) {

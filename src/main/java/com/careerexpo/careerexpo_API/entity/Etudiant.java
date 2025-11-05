@@ -44,7 +44,7 @@ public class Etudiant {
     @NotBlank
     private String niveau;
 
-    private enum Status {
+    public enum Status {
         PENDING, ACCEPTED, DECLINED
     }
 

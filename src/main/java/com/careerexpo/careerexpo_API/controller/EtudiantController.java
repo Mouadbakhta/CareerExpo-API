@@ -4,9 +4,13 @@ import com.careerexpo.careerexpo_API.entity.Etudiant;
 import com.careerexpo.careerexpo_API.service.facade.EtudiantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -30,20 +34,28 @@ public class EtudiantController {
             Etudiant createdEtudiant = etudiantService.createEtudiant(etudiant);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdEtudiant);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
     // Create etudiant with CV file
-    @PostMapping("/with-cv")
+    @PostMapping(value = "/with-cv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Etudiant> createEtudiantWithCV(
-            @RequestPart("etudiant") @Valid Etudiant etudiant,
+            @RequestPart(value = "etudiant", required = false) String etudiantJson,
+            @RequestParam(value = "etudiant", required = false) String etudiantJsonParam,
             @RequestPart("cv") MultipartFile cvFile) {
         try {
+            String effectiveEtudiantJson = etudiantJson != null ? etudiantJson : etudiantJsonParam;
+            if (effectiveEtudiantJson == null || effectiveEtudiantJson.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Required part 'etudiant' is missing or empty");
+            }
+            Etudiant etudiant = new ObjectMapper().readValue(effectiveEtudiantJson, Etudiant.class);
             Etudiant createdEtudiant = etudiantService.createEtudiantWithCV(etudiant, cvFile);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdEtudiant);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid etudiant JSON");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
