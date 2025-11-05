@@ -12,30 +12,24 @@ This file contains requests related to admin management in the Career Expo API.
 - **Example Response:** No saved example yet
 
 ### CreateAdmin
-- **Method:** PUT
-- **URL:** http://localhost:8080/api/admins/2
+- **Method:** POST
+- **URL:** http://localhost:8080/api/admins
 - **Headers:**
   - Content-Type: application/json
 - **Body:**
 ```json
-    {
-        "id": 3,
-        "email": "@gmail.com",
-        "role": "ADMIN",
-        "competitions": [],
-        "enabled": true,
-        "accountNonExpired": true,
-        "credentialsNonExpired": true,
-        "accountNonLocked": true,
-        "authorities": [
-            {
-                "authority": "ROLE_ADMIN"
-            }
-        ],
-        "username": "example@gmail.com"
-    }
-```
-- **Example Response:** No saved example yet
+{
+  "email": "admin@example.com",
+  "password": "securePassword123",
+  "role": "ADMIN"
+}
+- **Example Response:** 
+{
+    "id": 5,
+    "email": "admin@example.com",
+    "role": "ADMIN",
+    "competitions": []
+}
 
 ### selectAdminEmail
 - **Method:** GET
