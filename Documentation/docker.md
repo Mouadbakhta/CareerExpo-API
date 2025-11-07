@@ -48,6 +48,11 @@ docker run -d -p 8080:8080 --name careerexpo-app careerexpo-api:v1
 ```bash
 docker ps
 ```
+### 4. Pour lancer uniquement la base de données MySQL depuis Docker
+docker-compose up -d mysql 
+
+### 5. Pour accéder à MySQL dans le conteneur 
+docker exec -it careerexpo_mysql mysql -u user -p
 
 L'API est maintenant accessible sur : `http://localhost:8080`
 
@@ -81,16 +86,16 @@ docker-compose down
 
 ## 🔍 Commandes Docker Utiles
 
-| Commande | Description |
-|----------|-------------|
-| `docker ps` | Liste les conteneurs actifs |
-| `docker ps -a` | Liste tous les conteneurs (actifs et arrêtés) |
-| `docker logs careerexpo-app` | Affiche les logs de l'application |
-| `docker logs careerexpo_mysql` | Affiche les logs de MySQL |
-| `docker rm careerexpo-app` | Supprime le conteneur |
-| `docker-compose up -d` | Lance tous les services en arrière-plan |
-| `docker-compose down` | Arrête et supprime tous les conteneurs |
-
+| Commande                       | Description                                                                                   |
+|--------------------------------|-----------------------------------------------------------------------------------------------|
+| `docker ps`                    | Liste les conteneurs actifs                                                                   |
+| `docker ps -a`                 | Liste tous les conteneurs (actifs et arrêtés)                                                 |
+| `docker logs careerexpo-app`   | Affiche les logs de l'application                                                             |
+| `docker logs careerexpo_mysql` | Affiche les logs de MySQL                                                                     |
+| `docker rm careerexpo-app`     | Supprime le conteneur                                                                         |
+| `docker-compose up -d`         | Lance tous les services en arrière-plan                                                       |
+| `docker-compose down`          | Arrête et supprime tous les conteneurs                                                        |
+| `docker-compose restart mysql ` | Arrête le conteneur MySQL qui tourne actuellement.<br/> Redémarre immédiatement ce conteneur. |
 ---
 
 ## 🛠️ Résolution de Problèmes
