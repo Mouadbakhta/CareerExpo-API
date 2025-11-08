@@ -31,9 +31,15 @@ public class Etudiant {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @NotBlank(message = "Le chemin du CV est obligatoire")
+    @NotBlank(message = "Le numéro de téléphone est obligatoire")
     @Column(nullable = false)
-    private String cvPath;
+    private String telephone;
+
+    @Column(nullable = true)
+    private String cvPdfPath;
+
+    @Column(nullable = true)
+    private String cvVideoPath;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "competition_id", nullable = false)
@@ -88,12 +94,28 @@ public class Etudiant {
         this.status = status;
     }
 
-    public @NotBlank(message = "Le chemin du CV est obligatoire") String getCvPath() {
-        return cvPath;
+    public @NotBlank(message = "Le numéro de téléphone est obligatoire") String getTelephone() {
+        return telephone;
     }
 
-    public void setCvPath(@NotBlank(message = "Le chemin du CV est obligatoire") String cvPath) {
-        this.cvPath = cvPath;
+    public void setTelephone(@NotBlank(message = "Le numéro de téléphone est obligatoire") String telephone) {
+        this.telephone = telephone;
+    }
+
+    public @NotBlank(message = "Le chemin du CV PDF est obligatoire") String getCvPdfPath() {
+        return cvPdfPath;
+    }
+
+    public void setCvPdfPath(@NotBlank(message = "Le chemin du CV PDF est obligatoire") String cvPdfPath) {
+        this.cvPdfPath = cvPdfPath;
+    }
+
+    public String getCvVideoPath() {
+        return cvVideoPath;
+    }
+
+    public void setCvVideoPath(String cvVideoPath) {
+        this.cvVideoPath = cvVideoPath;
     }
 
     public Competition getCompetition() {

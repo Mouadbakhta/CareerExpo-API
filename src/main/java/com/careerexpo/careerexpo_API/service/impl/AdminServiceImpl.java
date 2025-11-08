@@ -3,7 +3,6 @@ package com.careerexpo.careerexpo_API.service.impl;
 import com.careerexpo.careerexpo_API.entity.Admin;
 import com.careerexpo.careerexpo_API.repository.AdminRepository;
 import com.careerexpo.careerexpo_API.service.facade.AdminService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

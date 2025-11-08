@@ -2,64 +2,73 @@ package com.careerexpo.careerexpo_API.controller;
 
 import com.careerexpo.careerexpo_API.entity.Etudiant;
 import com.careerexpo.careerexpo_API.service.facade.EtudiantService;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.web.server.ResponseStatusException;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/etudiants")
-
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class EtudiantController {
 
     private final EtudiantService etudiantService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public EtudiantController(EtudiantService etudiantService) {
         this.etudiantService = etudiantService;
     }
 
-    // Create a new etudiant
+    // ✅ Create simple etudiant (no files)
     @PostMapping
     public ResponseEntity<Etudiant> createEtudiant(@Valid @RequestBody Etudiant etudiant) {
         try {
-            Etudiant createdEtudiant = etudiantService.createEtudiant(etudiant);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdEtudiant);
+            Etudiant created = etudiantService.createEtudiant(etudiant);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
-    // Create etudiant with CV file
+    // ✅ Create etudiant with CV files (PDF + optional video)
     @PostMapping(value = "/with-cv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Etudiant> createEtudiantWithCV(
-            @RequestPart(value = "etudiant", required = false) String etudiantJson,
-            @RequestParam(value = "etudiant", required = false) String etudiantJsonParam,
-            @RequestPart("cv") MultipartFile cvFile) {
+            @RequestPart("etudiant") String etudiantJson,
+            @RequestPart("cvPdf") MultipartFile cvPdfFile,
+            @RequestPart(value = "cvVideo", required = false) MultipartFile cvVideoFile) {
         try {
-            String effectiveEtudiantJson = etudiantJson != null ? etudiantJson : etudiantJsonParam;
-            if (effectiveEtudiantJson == null || effectiveEtudiantJson.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Required part 'etudiant' is missing or empty");
-            }
-            Etudiant etudiant = new ObjectMapper().readValue(effectiveEtudiantJson, Etudiant.class);
-            Etudiant createdEtudiant = etudiantService.createEtudiantWithCV(etudiant, cvFile);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdEtudiant);
+            Etudiant etudiant = objectMapper.readValue(etudiantJson, Etudiant.class);
+
+            // Validate file sizes (max 5 MB)
+            if (cvPdfFile.getSize() > 5 * 1024 * 1024)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier PDF ne doit pas dépasser 5 MB");
+            if (cvVideoFile != null && cvVideoFile.getSize() > 5 * 1024 * 1024)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier vidéo ne doit pas dépasser 5 MB");
+
+            Etudiant created = etudiantService.createEtudiantWithCV(etudiant, cvPdfFile, cvVideoFile);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+
         } catch (JsonProcessingException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid etudiant JSON");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Format JSON invalide pour l'étudiant");
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
-    // Get etudiant by ID
+    // ✅ Get all etudiants
+    @GetMapping
+    public ResponseEntity<List<Etudiant>> getAllEtudiants() {
+        return ResponseEntity.ok(etudiantService.getAllEtudiants());
+    }
+
+    // ✅ Get etudiant by ID
     @GetMapping("/{id}")
     public ResponseEntity<Etudiant> getEtudiantById(@PathVariable Long id) {
         return etudiantService.getEtudiantById(id)
@@ -67,7 +76,7 @@ public class EtudiantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Get etudiant by ID with competition details
+    // ✅ Get etudiant with competition
     @GetMapping("/{id}/with-competition")
     public ResponseEntity<Etudiant> getEtudiantWithCompetition(@PathVariable Long id) {
         return etudiantService.getEtudiantWithCompetition(id)
@@ -75,46 +84,34 @@ public class EtudiantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Get all etudiants
-    @GetMapping
-    public ResponseEntity<List<Etudiant>> getAllEtudiants() {
-        List<Etudiant> etudiants = etudiantService.getAllEtudiants();
-        return ResponseEntity.ok(etudiants);
-    }
-
-    // Get etudiants by competition ID
+    // ✅ Get by competition
     @GetMapping("/competition/{competitionId}")
-    public ResponseEntity<List<Etudiant>> getEtudiantsByCompetitionId(@PathVariable Long competitionId) {
-        List<Etudiant> etudiants = etudiantService.getEtudiantsByCompetitionId(competitionId);
-        return ResponseEntity.ok(etudiants);
+    public ResponseEntity<List<Etudiant>> getEtudiantsByCompetition(@PathVariable Long competitionId) {
+        return ResponseEntity.ok(etudiantService.getEtudiantsByCompetitionId(competitionId));
     }
 
-    // Get etudiants by competition ID with competition details
+    // ✅ Get by competition with details
     @GetMapping("/competition/{competitionId}/with-details")
-    public ResponseEntity<List<Etudiant>> getEtudiantsByCompetitionIdWithCompetition(@PathVariable Long competitionId) {
-        List<Etudiant> etudiants = etudiantService.getEtudiantsByCompetitionIdWithCompetition(competitionId);
-        return ResponseEntity.ok(etudiants);
+    public ResponseEntity<List<Etudiant>> getEtudiantsByCompetitionWithDetails(@PathVariable Long competitionId) {
+        return ResponseEntity.ok(etudiantService.getEtudiantsByCompetitionIdWithCompetition(competitionId));
     }
 
-    // Get etudiants by etablissement (school/institute)
+    // ✅ Get by etablissement
     @GetMapping("/etablissement/{etablissement}")
     public ResponseEntity<List<Etudiant>> getEtudiantsByEtablissement(@PathVariable String etablissement) {
-        List<Etudiant> etudiants = etudiantService.getEtudiantsByEtablissement(etablissement);
-        return ResponseEntity.ok(etudiants);
+        return ResponseEntity.ok(etudiantService.getEtudiantsByEtablissement(etablissement));
     }
 
-    // Get etudiants by etablissement and competition
+    // ✅ Get by etablissement + competition
     @GetMapping("/etablissement/{etablissement}/competition/{competitionId}")
     public ResponseEntity<List<Etudiant>> getEtudiantsByEtablissementAndCompetition(
-            @PathVariable String etablissement,
-            @PathVariable Long competitionId) {
-        List<Etudiant> etudiants = etudiantService.getEtudiantsByEtablissementAndCompetition(etablissement, competitionId);
-        return ResponseEntity.ok(etudiants);
+            @PathVariable String etablissement, @PathVariable Long competitionId) {
+        return ResponseEntity.ok(etudiantService.getEtudiantsByEtablissementAndCompetition(etablissement, competitionId));
     }
 
-    // Get etudiant by nom and prenom
+    // ✅ Search by nom + prenom
     @GetMapping("/search")
-    public ResponseEntity<Etudiant> getEtudiantByNomAndPrenom(
+    public ResponseEntity<Etudiant> searchEtudiant(
             @RequestParam String nom,
             @RequestParam String prenom) {
         return etudiantService.getEtudiantByNomAndPrenom(nom, prenom)
@@ -122,71 +119,67 @@ public class EtudiantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Update etudiant
+    // ✅ Update etudiant (data only)
     @PutMapping("/{id}")
     public ResponseEntity<Etudiant> updateEtudiant(@PathVariable Long id, @Valid @RequestBody Etudiant etudiant) {
         try {
-            Etudiant updatedEtudiant = etudiantService.updateEtudiant(id, etudiant);
-            return ResponseEntity.ok(updatedEtudiant);
+            Etudiant updated = etudiantService.updateEtudiant(id, etudiant);
+            return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
-    // Update etudiant CV
-    @PutMapping("/{id}/cv")
+    // ✅ Update CV (PDF + optional video)
+    @PutMapping(value = "/{id}/cv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Etudiant> updateEtudiantCV(
             @PathVariable Long id,
-            @RequestPart("cv") MultipartFile cvFile) {
+            @RequestPart("cvPdf") MultipartFile cvPdfFile,
+            @RequestPart(value = "cvVideo", required = false) MultipartFile cvVideoFile) {
         try {
-            Etudiant updatedEtudiant = etudiantService.updateEtudiantCV(id, cvFile);
-            return ResponseEntity.ok(updatedEtudiant);
+            Etudiant updated = etudiantService.updateEtudiantCV(id, cvPdfFile, cvVideoFile);
+            return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
-    // Delete etudiant
+    // ✅ Delete etudiant
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEtudiant(@PathVariable Long id) {
         try {
             etudiantService.deleteEtudiant(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
-    // Validate etudiant (accept)
+    // ✅ Validate etudiant
     @PostMapping("/{id}/validate")
-    public ResponseEntity<Etudiant> validerEtudiant(@PathVariable Long id) {
+    public ResponseEntity<Etudiant> validateEtudiant(@PathVariable Long id) {
         try {
-            Etudiant validatedEtudiant = etudiantService.validerEtudiant(id);
-            return ResponseEntity.ok(validatedEtudiant);
+            Etudiant validated = etudiantService.validerEtudiant(id);
+            return ResponseEntity.ok(validated);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
-    // Refuse etudiant (decline)
+    // ✅ Refuse etudiant
     @PostMapping("/{id}/refuse")
-    public ResponseEntity<Void> refuserEtudiant(@PathVariable Long id) {
+    public ResponseEntity<Void> refuseEtudiant(@PathVariable Long id) {
         try {
             etudiantService.refuserEtudiant(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
-    // Count etudiants by competition
+    // ✅ Count etudiants per competition
     @GetMapping("/competition/{competitionId}/count")
     public ResponseEntity<Long> countEtudiantsByCompetition(@PathVariable Long competitionId) {
-        long count = etudiantService.countEtudiantsByCompetition(competitionId);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok(etudiantService.countEtudiantsByCompetition(competitionId));
     }
 }

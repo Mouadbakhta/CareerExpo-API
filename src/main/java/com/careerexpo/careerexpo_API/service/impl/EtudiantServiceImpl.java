@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,22 +55,35 @@ public class EtudiantServiceImpl implements EtudiantService {
 
     @Override
     @Transactional
-    public Etudiant createEtudiantWithCV(Etudiant etudiant, MultipartFile cvFile) {
+    public Etudiant createEtudiantWithCV(Etudiant etudiant, MultipartFile cvPdfFile, MultipartFile cvVideoFile) {
         if (!validateEtudiant(etudiant)) {
             throw new IllegalArgumentException("Données étudiant invalides");
         }
 
-        if (cvFile == null || cvFile.isEmpty()) {
-            throw new IllegalArgumentException("Le fichier CV est requis");
+        if (cvPdfFile == null || cvPdfFile.isEmpty()) {
+            throw new IllegalArgumentException("Le fichier CV PDF est requis");
         }
 
         if (existsByNomAndPrenom(etudiant.getNom(), etudiant.getPrenom())) {
             throw new IllegalArgumentException("Un étudiant avec ce nom et prénom existe déjà");
         }
 
-        // Sauvegarder le fichier CV et obtenir le chemin
-        String cvPath = fileStorageService.storeFile(cvFile);
-        etudiant.setCvPath(cvPath);
+        // Créer un dossier pour l'étudiant
+        Path studentDir = fileStorageService.createStudentDirectory(etudiant.getNom(), etudiant.getPrenom());
+
+        // Format the file names
+        String pdfFileName = "CV"+ etudiant.getPrenom()+"_"+etudiant.getNom()+".pdf";
+        String videoFileName = "Video"+ etudiant.getPrenom()+"_"+etudiant.getNom()+".mp4";;
+
+        // Sauvegarder le fichier CV PDF dans le dossier de l'étudiant
+        String cvPdfPath = fileStorageService.storeFile(cvPdfFile, pdfFileName, studentDir);
+        etudiant.setCvPdfPath(cvPdfPath);
+
+        // Sauvegarder le fichier vidéo si fourni
+        if (cvVideoFile != null && !cvVideoFile.isEmpty()) {
+            String cvVideoPath = fileStorageService.storeFile(cvVideoFile, videoFileName, studentDir);
+            etudiant.setCvVideoPath(cvVideoPath);
+        }
 
         // Assure un statut par défaut si absent
         if (etudiant.getStatus() == null) {
@@ -145,10 +159,6 @@ public class EtudiantServiceImpl implements EtudiantService {
             existingEtudiant.setStatus(etudiant.getStatus());
         }
 
-        if (etudiant.getCvPath() != null) {
-            existingEtudiant.setCvPath(etudiant.getCvPath());
-        }
-
         if (etudiant.getCompetition() != null) {
             if (etudiant.getCompetition().getId() == null) {
                 throw new IllegalArgumentException("L'identifiant de la compétition est requis");
@@ -167,22 +177,39 @@ public class EtudiantServiceImpl implements EtudiantService {
 
     @Override
     @Transactional
-    public Etudiant updateEtudiantCV(Long id, MultipartFile cvFile) {
+    public Etudiant updateEtudiantCV(Long id, MultipartFile cvPdfFile, MultipartFile cvVideoFile) {
         Etudiant existingEtudiant = etudiantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Étudiant non trouvé avec l'id: " + id));
 
-        if (cvFile == null || cvFile.isEmpty()) {
-            throw new IllegalArgumentException("Le fichier CV est requis");
+        if (cvPdfFile == null || cvPdfFile.isEmpty()) {
+            throw new IllegalArgumentException("Le fichier CV PDF est requis");
         }
 
-        // Supprimer l'ancien CV si nécessaire
-        if (existingEtudiant.getCvPath() != null) {
-            fileStorageService.deleteFile(existingEtudiant.getCvPath());
+        // Obtenir ou créer le dossier de l'étudiant
+        Path studentDir = fileStorageService.createStudentDirectory(existingEtudiant.getNom(), existingEtudiant.getPrenom());
+
+        // Format the file names
+        String pdfFileName = "CV"+ existingEtudiant.getPrenom()+"_"+existingEtudiant.getNom()+".pdf";
+        String videoFileName = "Video"+ existingEtudiant.getPrenom()+"_"+existingEtudiant.getNom()+".mp4";
+
+        // Supprimer l'ancien CV PDF si nécessaire
+        if (existingEtudiant.getCvPdfPath() != null) {
+            fileStorageService.deleteFile(existingEtudiant.getCvPdfPath());
         }
 
-        // Sauvegarder le nouveau CV
-        String cvPath = fileStorageService.storeFile(cvFile);
-        existingEtudiant.setCvPath(cvPath);
+        // Sauvegarder le nouveau CV PDF
+        String cvPdfPath = fileStorageService.storeFile(cvPdfFile, pdfFileName, studentDir);
+        existingEtudiant.setCvPdfPath(cvPdfPath);
+
+        // Gérer la vidéo CV si fournie
+        if (cvVideoFile != null && !cvVideoFile.isEmpty()) {
+            // Supprimer l'ancienne vidéo si elle existe
+            if (existingEtudiant.getCvVideoPath() != null) {
+                fileStorageService.deleteFile(existingEtudiant.getCvVideoPath());
+            }
+            String cvVideoPath = fileStorageService.storeFile(cvVideoFile, videoFileName, studentDir);
+            existingEtudiant.setCvVideoPath(cvVideoPath);
+        }
 
         return etudiantRepository.save(existingEtudiant);
     }
@@ -193,9 +220,12 @@ public class EtudiantServiceImpl implements EtudiantService {
         Etudiant etudiant = etudiantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Étudiant non trouvé avec l'id: " + id));
 
-        // Supprimer le CV associé
-        if (etudiant.getCvPath() != null) {
-            fileStorageService.deleteFile(etudiant.getCvPath());
+        // Supprimer les fichiers CV associés
+        if (etudiant.getCvPdfPath() != null) {
+            fileStorageService.deleteFile(etudiant.getCvPdfPath());
+        }
+        if (etudiant.getCvVideoPath() != null) {
+            fileStorageService.deleteFile(etudiant.getCvVideoPath());
         }
 
         etudiantRepository.deleteById(id);
@@ -214,29 +244,33 @@ public class EtudiantServiceImpl implements EtudiantService {
     @Override
     @Transactional
     public Etudiant validerEtudiant(Long id) {
-        Etudiant etudiant = etudiantRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé avec l'id: " + id));
+        // Use a JPQL update to avoid triggering entity-level bean validation
+        if (!etudiantRepository.existsById(id)) {
+            throw new IllegalArgumentException("Étudiant non trouvé avec l'id: " + id);
+        }
 
-        // Logique de validation (peut être étendue selon vos besoins)
-        // Par exemple: ajouter un champ 'statut' à l'entité Etudiant
-        // etudiant.setStatut("VALIDÉ");
+        int updated = etudiantRepository.updateStatusById(id, Etudiant.Status.ACCEPTED);
+        if (updated == 0) {
+            throw new RuntimeException("Impossible de valider l'étudiant (aucune ligne mise à jour)");
+        }
 
-        return etudiantRepository.save(etudiant);
+        // Return the updated entity with competition eagerly fetched
+        return etudiantRepository.findByIdWithCompetition(id)
+                .orElseThrow(() -> new RuntimeException("Étudiant introuvable après mise à jour: " + id));
     }
 
     @Override
     @Transactional
     public void refuserEtudiant(Long id) {
-        Etudiant etudiant = etudiantRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé avec l'id: " + id));
+        // Use JPQL update to avoid entity validation on fields like telephone or cvPdfPath
+        if (!etudiantRepository.existsById(id)) {
+            throw new RuntimeException("Étudiant non trouvé avec l'id: " + id);
+        }
 
-        // Logique de refus
-        // Option 1: Supprimer l'étudiant
-        deleteEtudiant(id);
-
-        // Option 2: Marquer comme refusé (nécessite un champ 'statut')
-        // etudiant.setStatut("REFUSÉ");
-        // etudiantRepository.save(etudiant);
+        int updated = etudiantRepository.updateStatusById(id, Etudiant.Status.DECLINED);
+        if (updated == 0) {
+            throw new RuntimeException("Impossible de refuser l'étudiant (aucune ligne mise à jour)");
+        }
     }
 
     @Override
@@ -257,14 +291,19 @@ public class EtudiantServiceImpl implements EtudiantService {
             return false;
         }
 
+        if (etudiant.getTelephone() == null || etudiant.getTelephone().isBlank()) {
+            return false;
+        }
+
+        if (etudiant.getNiveau() == null || etudiant.getNiveau().isBlank()) {
+            return false;
+        }
+
         if (etudiant.getCompetition() == null) {
             return false;
         }
 
-        // cvPath peut être null lors de la création si uploadé séparément
-        // if (etudiant.getCvPath() == null || etudiant.getCvPath().isBlank()) {
-        //     return false;
-        // }
+        // cvPdfPath and cvVideoPath are validated separately during file upload
 
         return true;
     }

@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface EtudiantService {
 
     Etudiant createEtudiant(Etudiant etudiant);
-    Etudiant createEtudiantWithCV(Etudiant etudiant, MultipartFile cvFile);
+    Etudiant createEtudiantWithCV(Etudiant etudiant, MultipartFile cvPdfFile, MultipartFile cvVideoFile);
     Optional<Etudiant> getEtudiantById(Long id);
     Optional<Etudiant> getEtudiantWithCompetition(Long id);
     List<Etudiant> getAllEtudiants();
@@ -19,7 +19,7 @@ public interface EtudiantService {
     List<Etudiant> getEtudiantsByEtablissementAndCompetition(String etablissement, Long competitionId);
     Optional<Etudiant> getEtudiantByNomAndPrenom(String nom, String prenom);
     Etudiant updateEtudiant(Long id, Etudiant etudiant);
-    Etudiant updateEtudiantCV(Long id, MultipartFile cvFile);
+    Etudiant updateEtudiantCV(Long id, MultipartFile cvPdfFile, MultipartFile cvVideoFile);
     void deleteEtudiant(Long id);
     long countEtudiantsByCompetition(Long competitionId);
     boolean existsByNomAndPrenom(String nom, String prenom);
